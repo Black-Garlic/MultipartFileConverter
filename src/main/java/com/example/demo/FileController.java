@@ -5,12 +5,20 @@ import kr.dogfoot.hwplib.reader.HWPReader;
 import kr.dogfoot.hwplib.tool.textextractor.TextExtractMethod;
 import kr.dogfoot.hwplib.tool.textextractor.TextExtractor;
 import org.apache.commons.io.IOUtils;
+import org.apache.poi.hslf.usermodel.HSLFShape;
+import org.apache.poi.hslf.usermodel.HSLFSlide;
+import org.apache.poi.hslf.usermodel.HSLFSlideShow;
+import org.apache.poi.hslf.usermodel.HSLFTextShape;
 import org.apache.poi.hssf.extractor.ExcelExtractor;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFShape;
+import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.apache.poi.xssf.extractor.XSSFExcelExtractor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
@@ -54,6 +62,12 @@ public class FileController {
                 break;
             case "csv" :
                 parseData = parseCsv(multipartFile);
+                break;
+            case "pptx":
+                parseData = parsePptx(multipartFile);
+                break;
+            case "ppt":
+                parseData = parsePpt(multipartFile);
                 break;
             case "hwp" :
                 parseData = parseHwp(multipartFile);
@@ -157,6 +171,59 @@ public class FileController {
             throw new Exception(e);
         }
 
+        return sb.toString();
+    }
+
+    public String parsePptx(MultipartFile multipartFile) throws Exception {
+        StringBuilder sb = new StringBuilder();
+
+        try {
+            XMLSlideShow xmlSlideShow = new XMLSlideShow(multipartFile.getInputStream());
+
+            List<XSLFSlide> xslfSlideList = xmlSlideShow.getSlides();
+
+            for (XSLFSlide xslfSlide : xslfSlideList) {
+                List<XSLFShape> xslfShapeList = xslfSlide.getShapes();
+
+                for (XSLFShape xslfShape : xslfShapeList) {
+                    if (xslfShape instanceof XSLFTextShape) {
+                        XSLFTextShape textShape = (XSLFTextShape) xslfShape;
+                        sb.append(textShape.getText()).append("\t");
+                    }
+                }
+
+                sb.append("\n");
+            }
+        } catch (Exception e) {
+            throw new Exception(e);
+        }
+
+        return sb.toString();
+    }
+
+    public String parsePpt(MultipartFile multipartFile) throws Exception {
+        StringBuilder sb = new StringBuilder();
+
+        try {
+            HSLFSlideShow hslfSlideShow = new HSLFSlideShow(multipartFile.getInputStream());
+
+            List<HSLFSlide> hslfSlideList = hslfSlideShow.getSlides();
+
+            for (HSLFSlide hslfSlide : hslfSlideList) {
+                List<HSLFShape> hslfShapeList = hslfSlide.getShapes();
+
+                for (HSLFShape hslfShape : hslfShapeList) {
+                    if (hslfShape instanceof HSLFTextShape) {
+                        HSLFTextShape textShape = (HSLFTextShape) hslfShape;
+                        sb.append(textShape.getText()).append("\t");
+                    }
+                }
+
+                sb.append("\n");
+            }
+        } catch (Exception e) {
+            throw new Exception(e);
+        }
 
         return sb.toString();
     }
